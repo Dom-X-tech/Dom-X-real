@@ -637,22 +637,18 @@ else if (command === 'shorturl') {
 
 
 // Add member
-else if (command === "add") {
-    if (!isGroup) {
-        return await EliteProTech.sendMessage(sender, {
-            text: "❌ This command can only be used in groups!"
-        });
-    }
 
+
+
+            // Kickall
+else if (command === "add") {
+    if (!isGroup) return;
+    if (!isAdmin) return await EliteProTech.sendMessage(sender, { text: "❌ This command is only for group admins." });
     if (!args[0]) {
-        return await EliteProTech.sendMessage(sender, {
-            text: "❌ Usage: .add 234xxxxxxxxxx"
-        });
+        return await EliteProTech.sendMessage(sender, { text: "❌ Usage: .add 234xxxxxxxxxx" });
     }
 
     let number = args[0].replace(/[^0-9]/g, "");
-    let jid = number + "@s.whatsapp.net";
-
     await sendInteractiveMessage(EliteProTech, sender, {
         title: "⚠️ Confirm Add",
         text: `Add ${number} to the group?`,
@@ -669,44 +665,24 @@ else if (command === "add") {
     });
 }
 
-// Confirm add
 else if (command === "confirmadd") {
-    if (!isGroup) return;
-
-    if (!args[0]) return;
-
+    if (!isGroup || !args[0]) return;
+    if (!isAdmin) return await EliteProTech.sendMessage(sender, { text: "❌ This command is only for group admins." });
     let number = args[0].replace(/[^0-9]/g, "");
     let jid = number + "@s.whatsapp.net";
 
     try {
-        await EliteProTech.groupParticipantsUpdate(
-            sender,
-            [jid],
-            "add"
-        );
-
-        await EliteProTech.sendMessage(sender, {
-            text: `✅ Successfully added ${number}`
-        });
-
+        await EliteProTech.groupParticipantsUpdate(sender, [jid], "add");
+        await EliteProTech.sendMessage(sender, { text: `✅ Successfully added ${number}` });
     } catch (err) {
         console.log(err);
-
-        await EliteProTech.sendMessage(sender, {
-            text: "❌ Failed to add user."
-        });
+        await EliteProTech.sendMessage(sender, { text: "❌ Failed to add user." });
     }
-            }
+}
 
-
-            // Kickall
 else if (command === "kickall") {
-    if (!isGroup) {
-        return await EliteProTech.sendMessage(sender, {
-            text: "❌ Group only command!"
-        });
-    }
-
+    if (!isGroup) return;
+    if (!isAdmin) return await EliteProTech.sendMessage(sender, { text: "❌ This command is only for group admins." });
     await sendInteractiveMessage(EliteProTech, sender, {
         title: "⚠️ Confirm KickAll",
         text: "Remove all non-admin members?",
@@ -723,54 +699,29 @@ else if (command === "kickall") {
     });
 }
 
-// Confirm kickall
 else if (command === "confirmkickall") {
     if (!isGroup) return;
-
+    if (!isAdmin) return await EliteProTech.sendMessage(sender, { text: "❌ This command is only for group admins." });
     const metadata = await EliteProTech.groupMetadata(sender);
-
-    const admins = metadata.participants
-        .filter(p => p.admin)
-        .map(p => p.id);
-
-    const members = metadata.participants
-        .map(p => p.id)
-        .filter(id => !admins.includes(id));
+    const admins = metadata.participants.filter(p => p.admin).map(p => p.id);
+    const members = metadata.participants.map(p => p.id).filter(id => !admins.includes(id));
 
     if (members.length) {
-        await EliteProTech.groupParticipantsUpdate(
-            sender,
-            members,
-            "remove"
-        );
+        await EliteProTech.groupParticipantsUpdate(sender, members, "remove");
     }
-
-    await EliteProTech.sendMessage(sender, {
-        text: `✅ Removed ${members.length} members.`
-    });
+    await EliteProTech.sendMessage(sender, { text: `✅ Removed ${members.length} members.` });
 }
 
-
-
-                                       // Kick command
 else if (command === "kick") {
-    if (!isGroup) {
-        return await EliteProTech.sendMessage(sender, {
-            text: "❌ Group only command!"
-        });
-    }
-
-    const mentioned =
-        msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    if (!isGroup) return;
+    if (!isAdmin) return await EliteProTech.sendMessage(sender, { text: "❌ This command is only for group admins." });
+    const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
 
     if (!mentioned.length) {
-        return await EliteProTech.sendMessage(sender, {
-            text: "❌ Tag a user to kick."
-        });
+        return await EliteProTech.sendMessage(sender, { text: "❌ Tag a user to kick." });
     }
 
     const target = mentioned[0];
-
     await sendInteractiveMessage(EliteProTech, sender, {
         title: "⚠️ Confirm Kick",
         text: `Kick @${target.split("@")[0]} ?`,
@@ -787,77 +738,24 @@ else if (command === "kick") {
     });
 }
 
-// Confirm kick
 else if (command === "confirmkick") {
     if (!isGroup) return;
-
+    if (!isAdmin) return await EliteProTech.sendMessage(sender, { text: "❌ This command is only for group admins." });
     const target = args[0];
+    await EliteProTech.groupParticipantsUpdate(sender, [target], "remove");
+    await EliteProTech.sendMessage(sender, { text: "✅ User kicked." });
+}
 
-    await EliteProTech.groupParticipantsUpdate(
-        sender,
-        [target],
-        "remove"
-    );
+    
 
-    await EliteProTech.sendMessage(sender, {
-        text: "✅ User kicked."
-    });
-        }
+
 
 
 
     
     
 
-                    else if (command === "img") {
-    if (!args.length) {
-        return await EliteProTech.sendMessage(sender, {
-            text: "✳️ Please provide text to search.\nExample: .img cat" + POWERED_BY,
-            contextInfo: context
-        });
-    }
-
-    const query = args.join(" ");
-
-    try {
-        await EliteProTech.sendMessage(sender, {
-            text: "⏳ Searching image..." + POWERED_BY,
-            contextInfo: context
-        });
-
-        const response = await axios.get(
-            `https://bk9.fun/pinterest/search?q=${encodeURIComponent(query)}`
-        );
-
-        const res = response.data;
-
-        if (res && res.status && res.BK9.length > 0) {
-            const randomResult =
-                res.BK9[Math.floor(Math.random() * res.BK9.length)];
-
-            await EliteProTech.sendMessage(sender, {
-                image: { url: randomResult.images_url },
-                caption: randomResult.grid_title || `Result for: ${query}`,
-                contextInfo: context
-            });
-        } else {
-            await EliteProTech.sendMessage(sender, {
-                text: "❌ No image found." + POWERED_BY,
-                contextInfo: context
-            });
-        }
-    } catch (err) {
-        console.log("IMG ERROR:", err);
-
-        await EliteProTech.sendMessage(sender, {
-            text: "❌ Failed to fetch image." + POWERED_BY,
-            contextInfo: context
-        });
-    }
-                    }
-
-
-
+                    
 
 else if (["gs", "groupstatus", "gcstatus"].includes(command)) {
     if (!isGroup) {
